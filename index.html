@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta name="color-scheme" content="dark" />
+	<meta name="robots" content="all" />
+	<meta name="theme-color" content="SlateBlue" />
+	<meta name="description" content="A very simple text notepad application" />
+
+	<link rel="icon" href="./icon.svg" />
+	<link rel="manifest" href="./manifest.webmanifest" />
+	<link rel="apple-touch-icon" href="./icon.png" />
+
+	<base href="./" />
+
+	<title>Notepad</title>
+
+	<style>
+		:root {
+			overflow: hidden;
+
+			/* --primary: darkSlateBlue;
+			--secondary: slateBlue;
+			--tertiary: mediumSlateBlue; */
+
+			/* --primary: SlateBlue; */
+			--primary: SlateBlue;
+			/* --secondary: mediumslateBlue; */
+			--secondary: #fff2;
+			/* --tertiary: mediumSlateBlue; */
+			--tertiary: #fff3;
+
+			tab-size: 3;
+
+			--outline: 2px solid currentColor;
+			--outline-offset: -1px;
+
+			scrollbar-color: var(--primary) transparent;
+		}
+
+		body {
+			font-family: system-ui;
+			margin: 0;
+			overflow-x: hidden;
+
+			position: fixed;
+			inset: env(titlebar-area-height, 2rem) 0 0;
+		}
+
+		button {
+			border: none;
+			padding: 0;
+			background-color: transparent;
+			font-family: inherit;
+			font-size: inherit;
+			cursor: pointer;
+		}
+
+		nav {
+			app-region: drag;
+			display: flex;
+			gap: .5rem;
+			padding: 0 .4rem;
+			position: fixed;
+			align-items: center;
+
+			top: env(titlebar-area-y, 0);
+			left: env(titlebar-area-x, 0);
+			height: env(titlebar-area-height, 2rem);
+			width: env(titlebar-area-width, 100%);
+			box-sizing: border-box;
+
+			--radius: .4rem;
+
+			overflow: hidden;
+			white-space: nowrap;
+
+			background-color: var(--primary);
+			color: white;
+		}
+
+		nav img {
+			block-size: 16px;
+			aspect-ratio: 1;
+		}
+
+		nav h1 {
+			font-size: 1em;
+			font-weight: normal;
+			margin: 0;
+		}
+
+		input:is([type=checkbox], [type=file]) {
+			position: absolute;
+			opacity: 0;
+			pointer-events: none;
+		}
+
+		:is(input#monospace:focus-visible~nav label[for=monospace],
+			input#tabMovesFocus:focus-visible~nav label[for=tabMovesFocus],
+			input#lightTheme:focus-visible~nav label[for=lightTheme]) {
+			outline: var(--outline);
+			outline-offset: var(--outline-offset)
+		}
+
+		nav :is(label, button) {
+			app-region: no-drag;
+			padding-inline: .4rem;
+			border-radius: .3rem;
+			box-shadow: inset 0 0 0 1px var(--tertiary);
+			cursor: pointer;
+			transition: background-color .2s;
+		}
+
+		nav :is(label, button):focus-visible {
+			outline: var(--outline);
+			outline-offset: var(--outline-offset);
+		}
+
+		label.containsInput {
+			padding-inline: 0;
+		}
+
+		label.containsInput input~span {
+			padding-inline: .4rem;
+			border-radius: inherit;
+		}
+
+		label.containsInput input:focus-visible~span {
+			outline: var(--outline);
+			outline-offset: var(--outline-offset);
+		}
+
+		label[for=monospace]::after {
+			content: "sans serif";
+		}
+
+		input#monospace:checked~nav label[for=monospace]::after {
+			content: "monospace";
+		}
+
+		label[for=tabMovesFocus]::after {
+			content: "tab indents text";
+		}
+
+		input#tabMovesFocus:checked~nav label[for=tabMovesFocus]::after {
+			content: "tab moves focus";
+		}
+
+		input#lightTheme~nav label[for=lightTheme]::after {
+			content: "🌙\fe0e";
+
+			display: inline-block;
+			text-align: center;
+			min-inline-size: 1em;
+		}
+
+		input#lightTheme:checked~nav label[for=lightTheme]::after {
+			content: "☀\fe0e";
+		}
+
+		nav :is(label, button):hover {
+			background-color: var(--secondary);
+		}
+
+		main {
+			inline-size: 100%;
+			block-size: 100%;
+			box-sizing: border-box;
+			--padding: .4rem;
+			padding: var(--padding);
+			padding-block-start: 0;
+			background-color: var(--primary);
+			border-radius: 0 0 var(--padding) calc(var(--padding) * 1.5);
+		}
+
+		textarea {
+			border: none;
+			display: block;
+			border-radius: 0;
+			font-family: system-ui;
+			font-size: 1.2rem;
+			margin: 0;
+			padding: .4rem;
+			box-sizing: border-box;
+			inline-size: 100%;
+			block-size: 100%;
+			resize: none;
+			outline: none;
+			background: none;
+			background-color: #111117;
+			border-radius: .4rem;
+
+			cursor: auto;
+
+			caret-color: color-mix(in srgb, var(--tertiary), currentColor 40%);
+		}
+
+		input#lightTheme:checked~* textarea {
+			background-color: white;
+			color: black;
+		}
+
+		input#monospace:checked~* textarea {
+			font-family: monospace;
+		}
+
+		dialog.hideTitleBar {
+			color: white;
+			max-inline-size: 15rem;
+			background-color: #292a2d;
+			border: none;
+			border-radius: .3rem;
+			padding: 1rem 1.2rem;
+			box-shadow: 0 0 .2rem black;
+			position: fixed;
+			inset: .2rem 4rem auto auto;
+		}
+
+		dialog.hideTitleBar button.close {
+			display: inline-flex;
+			justify-content: center;
+			align-items: center;
+			inline-size: 1.0em;
+			block-size: 1.0em;
+			font-size: 1.5rem;
+			color: #888;
+			position: absolute;
+			inset: .5rem .5rem auto auto;
+			transition: color .15s;
+		}
+
+		dialog.hideTitleBar button.close:hover {
+			color: #bbb;
+		}
+
+		dialog.hideTitleBar h2 {
+			margin-block: 0 .8rem;
+			font-size: 1rem;
+			font-weight: normal;
+			outline: none;
+		}
+
+		dialog.hideTitleBar p {
+			margin: 0;
+			font-size: .9rem;
+			font-weight: normal;
+		}
+
+		dialog.hideTitleBar .hideTitleBarIcon {
+			display: inline-grid;
+			place-items: center;
+			inline-size: 1.5em;
+			block-size: 1.5em;
+			background-color: var(--primary);
+			border-radius: .3em;
+		}
+
+		dialog.hideTitleBar .hideTitleBarIcon::before {
+			content: "∟";
+			position: relative;
+			display: inline-block;
+			transform: translate(.15em, .3em) rotate(135deg);
+		}
+
+		::selection {
+			background: var(--primary);
+			color: white;
+		}
+
+		::-webkit-scrollbar {
+			inline-size: 1rem;
+			block-size: 1rem;
+		}
+
+		::-webkit-scrollbar-thumb,
+		::-webkit-scrollbar-button {
+			background-color: var(--primary);
+			inline-size: 1rem;
+			block-size: 1rem;
+			border: 0.25rem solid transparent;
+			border-radius: 0.5rem;
+			background-clip: padding-box;
+		}
+
+		::-webkit-scrollbar-thumb:hover,
+		::-webkit-scrollbar-button:hover {
+			background-color: var(--secondary);
+		}
+
+	</style>
+
+	<script type="module">
+		const /** @type {typeof document.querySelector} */ $ = document.querySelector.bind(document);
+
+
+		$("textarea").focus();
+
+		const zoom = (/** @type {number} */ delta) => {
+			const /** @type {number} */ scale = 1.2 ** delta;
+
+			const /** @type {HTMLTextAreaElement} */ textarea = $("textarea");
+			const /** @type {number} */ fontSize = window.parseFloat(getComputedStyle(textarea).fontSize);
+			const /** @type {number} */ newFontSize = fontSize * scale;
+
+			textarea.style.fontSize = CSS.px(newFontSize);
+		};
+
+		{
+			let /** @type {FileSystemFileHandle} */ fileHandle;
+
+			window.launchQueue?.setConsumer(async ({ files: [newFileHandle], targetURL }) => {
+				if (newFileHandle) {
+					const /** @type {string} */ text = await (await newFileHandle.getFile()).text();
+					$("textarea").value = text;
+
+					fileHandle = newFileHandle;
+				}
+			});
+
+			{
+				let /** @type {boolean} */ unsavedChanges = false;
+
+				const saveFile = async () => {
+					$("button[data-action=save]").hidden = true;
+					unsavedChanges = false;
+
+					if (fileHandle) {
+						const writable = await fileHandle.createWritable();
+						await writable.write(new Blob([$("textarea").value], { type: "text/plain" }));
+						await writable.close();
+
+					} else {
+						const fileName = `Note from ${(date => ["Date", "Month", "FullYear"].map($ => (date["get" + $]() + +($ === "Month")).toString().padStart(2, "0")).join("."))(new Date())}.txt`;
+
+						if (window.showSaveFilePicker) {
+							fileHandle = await window.showSaveFilePicker({
+								suggestedName: fileName,
+								types: [{
+									description: "Text file",
+									accept: { "text/plain": [".txt"] },
+								}],
+							});
+
+						} else {
+							const /** @type {HTMLAnchorElement} */ anchorEl = document.createElement("a");
+							Object.assign(anchorEl, {
+								href: "data:text/plain;charset=utf-8," + window.encodeURIComponent($("textarea").value),
+								download: fileName,
+							});
+							anchorEl.click();
+						}
+					}
+				};
+
+				const openFile = async () => {
+					const newFileHandle = (await window.showOpenFilePicker?.({
+						types: [{
+							description: "Text file",
+							accept: { "text/plain": [".txt"] },
+						}],
+					}))?.[0];
+
+					if (newFileHandle) {
+						const /** @type {string} */ text = await (await newFileHandle.getFile()).text();
+						$("textarea").value = text;
+
+						fileHandle = newFileHandle;
+					}
+				}
+
+				window.addEventListener("keydown", async (/** @type {KeyboardEvent} */ event) => {
+					if (event.key === "s" && event.ctrlKey && !event.shiftKey && !event.altKey && !event.metaKey) {
+						event.preventDefault();
+						await saveFile();
+
+					} else if (event.key === "o" && event.ctrlKey && !event.shiftKey && !event.altKey && !event.metaKey) {
+						event.preventDefault();
+						await openFile();
+
+					} else if (event.key === "+" && event.ctrlKey && !event.shiftKey && !event.altKey && !event.metaKey) {
+						event.preventDefault();
+						zoom(1);
+
+					} else if (event.key === "-" && event.ctrlKey && !event.shiftKey && !event.altKey && !event.metaKey) {
+						event.preventDefault();
+						zoom(-1);
+
+					} else if (event.key === "0" && event.ctrlKey && !event.shiftKey && !event.altKey && !event.metaKey) {
+						event.preventDefault();
+						$("textarea").style.fontSize = "";
+					}
+				});
+
+				window.addEventListener("beforeunload", (event) => {
+					if ($("textarea").value && unsavedChanges) {
+						event.returnValue = true;
+					}
+				});
+
+				$("button[data-action=save]").addEventListener("click", saveFile);
+
+				if (window.showOpenFilePicker) {
+					$("label[data-action=open] input").addEventListener("click", async (event) => {
+						event.preventDefault();
+						await openFile();
+					});
+				} else {
+					$("label[data-action=open] input").addEventListener("input", async function (event) {
+						const text = await (this.files?.[0]).text();
+						if (text) {
+							$("textarea").value = text;
+							$("textarea").focus();
+							unsavedChanges = true;
+						}
+					});
+				}
+
+				$("textarea").addEventListener("input", function (event) {
+					if (!unsavedChanges) {
+						unsavedChanges = true
+						$("button[data-action=save]").hidden = false;
+					};
+
+					const { selectionStart } = this;
+
+					if ([undefined, "\n"].includes(this.value[selectionStart - 2])) {
+						if (event.data === "-") {
+							this.value = this.value.slice(0, selectionStart - 1) + "• " + this.value.slice(selectionStart);
+							this.selectionStart = this.selectionEnd = selectionStart + 1;
+						} else if (event.data === "+") {
+							const beforePlus = this.value.slice(0, selectionStart - 1);
+							const number = (+beforePlus.split("\n").at(-2)?.match(/^(?<number>\d+)\. /)?.groups?.number + 1) || 1;
+							this.value = beforePlus + number + ". " + this.value.slice(selectionStart);
+							this.selectionStart = this.selectionEnd = selectionStart + number.toString().length + 1;
+						}
+					}
+
+				});
+			}
+		}
+
+		{
+			window.addEventListener("wheel", (/** @type {WheelEvent} */ event) => {
+				if (event.ctrlKey && !event.shiftKey && !event.altKey) {
+					event.preventDefault();
+					zoom(-event.deltaY / 100);
+				}
+			}, { passive: false });
+
+			$("button[data-action=clearText]").addEventListener("click", () => {
+				$("textarea").value = "";
+			});
+
+			$("button[data-action=copyText]").addEventListener("click", async () => {
+				await navigator.clipboard.writeText($("textarea").value);
+			});
+
+
+			$("textarea").addEventListener("keydown", function (/** @type {KeyboardEvent} */ event) {
+				if (event.key === "Tab" && !$("input#tabMovesFocus").checked && !event.shiftKey && !event.altKey && !event.ctrlKey) {
+					event.preventDefault();
+					const { selectionStart, selectionEnd } = this;
+					this.value = this.value.substring(0, selectionStart) + "\t" + this.value.substring(selectionEnd);
+					this.selectionStart = this.selectionEnd = selectionStart + 1;
+				}
+			});
+		}
+
+		{ /// service-worker & PWA
+
+			const registerServiceWorker = () => {
+				navigator.serviceWorker?.register("./service-worker.js", { scope: "./", updateViaCache: "all" });
+			};
+			registerServiceWorker();
+
+			navigator.serviceWorker.addEventListener("message", async (/** @type {MessageEvent} */ { data }) => {
+				if (data.message === "updateAvailable") {
+					const button = $("button[data-action=update]")
+					button.hidden = false;
+					registerServiceWorker();
+					button.addEventListener("click", () => {
+						location.reload(true);
+					});
+				}
+			});
+
+			{
+				const checkReadyState = async () => {
+					if (document.readyState === "complete" && navigator.onLine) {
+						(await navigator.serviceWorker?.ready)?.active.postMessage({ message: "checkForUpdate" });
+					}
+				};
+				checkReadyState();
+				document.addEventListener("readystatechange", checkReadyState);
+			}
+
+			{
+				let /** @type {BeforeInstallPromptEvent} */ deferredEvent;
+				const button = $("button[data-action=install]");
+
+				window.addEventListener("beforeinstallprompt", (/** @type {BeforeInstallPromptEvent} */ event) => {
+					event.preventDefault();
+					deferredEvent = event;
+					button.hidden = false;
+				});
+
+				button.addEventListener("click", async () => {
+					await deferredEvent?.prompt?.();
+					button.hidden = true;
+				});
+			}
+
+			window.addEventListener("appinstalled", (/** @type {AppInstalledEvent} */ event) => {
+				$("button[data-action=install]").hidden = true;
+
+				if (navigator.windowControlsOverlay) {
+					const /** @type {HTMLDialogElement} */ dialog = $("dialog.hideTitleBar");
+					dialog.hidden = false;
+					dialog.show();
+
+					dialog.querySelector("button.close").addEventListener("click", () => {
+						dialog.close();
+					});
+
+					navigator.windowControlsOverlay?.addEventListener("geometrychange", (/** @type {WindowControlsOverlayGeometryChangeEvent} */ event) => {
+						if (event.visible) {
+							dialog.close();
+						}
+					});
+				}
+			});
+		}
+
+	</script>
+</head>
+
+<body>
+	<input type="checkbox" id="monospace" aria-label="monospace font" />
+	<input type="checkbox" id="lightTheme" aria-label="light color scheme" />
+	<input type="checkbox" id="tabMovesFocus" aria-label="tab moves focus" checked />
+
+	<nav>
+		<img width="16" height="16" src="./icon.svg" alt="notepad icon" />
+		<h1 class="title-text">Notepad</h1>
+
+		<label for="monospace" title="toggle monospace font">🗛&#xFE0E; </label>
+		<label for="lightTheme" title="toggle color scheme"></label>
+		<label for="tabMovesFocus" title="toggle tab moves focus">↹ </label>
+
+		<button data-action="clearText" title="clear all text">🛇&#xFE0E;</button>
+		<button data-action="copyText" title="copy all text">📋&#xFE0E;</button>
+		<button data-action="save" title="save file">🖫&#xFE0F; save</button>
+		<label data-action="open" class="containsInput" title="open file">
+			<input type="file" />
+			<span>📂&#xFE0E; open</span>
+		</label>
+		<button hidden data-action="install" title="install web app">⭳ install app</button>
+		<button hidden data-action="update" title="update app">⭮ update</button>
+	</nav>
+
+	<main>
+		<textarea aria-label="main text area" spellcheck="false"></textarea>
+	</main>
+
+	<dialog hidden class="hideTitleBar">
+		<h2 tabindex="-1">Hide title bar</h2>
+
+		<button class="close" type="reset">&Cross;</button>
+
+		<p>
+			For a better app-like experience, please click the
+			<span class="hideTitleBarIcon" title="hide title bar"></span>-button
+			to hide the default title bar.
+		</p>
+	</dialog>
+</body>
+
+</html>

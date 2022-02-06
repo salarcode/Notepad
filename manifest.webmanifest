@@ -1,0 +1,45 @@
+{
+	"name": "Notepad",
+	"short_name": "Notepad",
+	"description": "A very simple text notepad application",
+	"start_url": "./",
+	"scope": "./",
+	"display": "standalone",
+	"background_color": "black",
+	"theme_color": "black",
+	"display_override": [
+		"window-controls-overlay"
+	],
+	"file_handlers": [
+		{
+			"action": "./",
+			"accept": {
+				"text/plain": [
+					".txt"
+				]
+			},
+			"icons": [
+				{
+					"src": "./icon.png",
+					"sizes": "512x512",
+					"type": "image/png"
+				}
+			]
+		}
+	],
+	"icons": [
+		{
+			"src": "./icon.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "maskable any"
+		}
+	],
+	"screenshots": [
+		{
+			"src": "./icon.png",
+			"sizes": "512x512",
+			"type": "image/png"
+		}
+	]
+}

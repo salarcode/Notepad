@@ -1,0 +1,63 @@
+<svg viewBox="0 0 480 480" xmlns="http://www.w3.org/2000/svg">
+	<style>
+		:root {
+			color-scheme: dark light;
+
+			--primary: violet;
+			--secondary: darkOrchid;
+		}
+
+	</style>
+
+	<g fill="var(--secondary)">
+		<!-- background plate -->
+		<path fill="var(--secondary)" d="
+			M 60 90
+			a 60 60 0 0 1 60-60
+			h 240
+			a 60 60 0 0 1 60 60
+			v 330
+			a 60 60 0 0 1-60 60
+			h-240
+			a 60 60 0 0 1-60-60
+			Z
+		" />
+	</g>
+
+	<g fill="var(--primary)">
+		<g>
+			<!-- notepad rings -->
+			<symbol id="notepadRing" width="60" height="90">
+				<path d="
+					M 0 30
+					a 30 30 0 0 1 60 0
+					v 30
+					a 30 30 0 0 1-60 0
+					Z
+				" />
+			</symbol>
+
+			<use href="#notepadRing" x="120" y="0" />
+			<use href="#notepadRing" x="210" y="0" />
+			<use href="#notepadRing" x="300" y="0" />
+		</g>
+
+		<g>
+			<!-- text lines -->
+			<symbol id="textLine" width="240" height="60">
+				<path d="
+					M 15 30
+					a 15 15 0 0 1 0-30
+					h 210
+					a 15 15 0 0 1 0 30
+					Z
+				" />
+			</symbol>
+
+			<use href="#textLine" x="120" y="180" />
+			<use href="#textLine" x="120" y="240" />
+			<use href="#textLine" x="120" y="300" />
+			<use href="#textLine" x="120" y="360" />
+		</g>
+	</g>
+</svg>
