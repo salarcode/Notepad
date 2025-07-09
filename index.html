@@ -534,6 +534,20 @@
 			});
 		}
 
+		// Load text from localStorage on page load
+		const savedText = localStorage.getItem("notepad-text");
+		if (savedText !== null) {
+			$("textarea").value = savedText;
+		}
+
+		// Debounced save to localStorage on text change
+		let saveTimeout;
+		$("textarea").addEventListener("input", function () {
+			clearTimeout(saveTimeout);
+			saveTimeout = setTimeout(() => {
+				localStorage.setItem("notepad-text", this.value);
+			}, 200);
+		});
 	</script>
 </head>
 
